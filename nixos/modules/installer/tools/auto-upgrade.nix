@@ -33,6 +33,29 @@ let cfg = config.system.autoUpgrade; in
         '';
       };
 
+      preRebuild = mkOption {
+        type = types.lines;
+        default = "";
+        description = ''
+	  Bash script lines executed before the execution of
+	  nixos-rebuild. If it fails, nixos-rebuild is not
+	  executed. It is possible to add extra packages to the
+	  systemd unit file with the option
+	  <option>extraPath</option>.
+        '';
+      };
+
+      extraPath = mkOption {
+        type = types.listOf types.package;
+        example = [ literalExample "pkgs.git" ];
+	default = [];
+        description = ''
+	  A list of packages added to the systemd path. This is only
+	  useful in conjonction with option
+	  <option>preRebuild</option>.
+        '';
+      };
+
       flags = mkOption {
         type = types.listOf types.str;
         default = [];
@@ -78,9 +101,11 @@ let cfg = config.system.autoUpgrade; in
           HOME = "/root";
         };
 
-      path = [ pkgs.gnutar pkgs.xz.bin config.nix.package.out ];
+      path = [ pkgs.gnutar pkgs.xz.bin config.nix.package.out ] ++ cfg.extraPath;
 
       script = ''
+        set -eux
+        ${cfg.preRebuild}
         ${config.system.build.nixos-rebuild}/bin/nixos-rebuild switch ${toString cfg.flags}
       '';
 
