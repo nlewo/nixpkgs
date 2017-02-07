@@ -753,7 +753,7 @@ in
 
         # Keep a persistent journal. Note that systemd-tmpfiles will
         # set proper ownership/permissions.
-        mkdir -m 0700 -p /var/log/journal
+        mkdir -m 0750 -p /var/log/journal
       '';
 
     users.extraUsers.systemd-network.uid = config.ids.uids.systemd-network;
