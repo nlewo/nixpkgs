@@ -639,11 +639,11 @@ in {
 
 
   alembic = buildPythonPackage rec {
-    name = "alembic-0.8.3";
+    name = "alembic-0.8.10";
 
     src = pkgs.fetchurl {
       url = "mirror://pypi/a/alembic/${name}.tar.gz";
-      sha256 = "1sgwvwylzd5h14130mwr0cbyy0fil0a1bq0d0ki97wqvkic3db7f";
+      sha256 = "06br9sfqypnjlal6fsbnky3zb0askwcn3diz8k3kwa0qcblm0fqf";
     };
 
     buildInputs = with self; [ pytest pytestcov mock coverage ];
