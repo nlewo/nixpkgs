@@ -6418,28 +6418,7 @@ in {
 
   edward = callPackage ../development/python-modules/edward { };
 
-  elasticsearch = buildPythonPackage (rec {
-    name = "elasticsearch-1.9.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/e/elasticsearch/${name}.tar.gz";
-      sha256 = "091s60ziwhyl9kjfm833i86rcpjx46v9h16jkgjgkk5441dln3gb";
-    };
-
-    # Check is disabled because running them destroy the content of the local cluster!
-    # https://github.com/elasticsearch/elasticsearch-py/tree/master/test_elasticsearch
-    doCheck = false;
-    propagatedBuildInputs = with self; [ urllib3 requests ];
-    buildInputs = with self; [ nosexcover mock ];
-
-    meta = {
-      description = "Official low-level client for Elasticsearch";
-      homepage = https://github.com/elasticsearch/elasticsearch-py;
-      license = licenses.asl20;
-      maintainers = with maintainers; [ desiderius ];
-    };
-  });
-
+  elasticsearch = callPackage ../development/python-modules/elasticsearch{ };
 
   elasticsearchdsl = buildPythonPackage (rec {
     name = "elasticsearch-dsl-0.0.9";
