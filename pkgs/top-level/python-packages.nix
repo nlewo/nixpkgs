@@ -24850,6 +24850,8 @@ in {
     };
   };
 
+  tenacity = callPackage ../development/python-modules/tenacity { };
+
   terminado = buildPythonPackage rec {
     name = "terminado-${version}";
     version = "0.6";
