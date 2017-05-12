@@ -15020,21 +15020,7 @@ in {
     };
   };
 
-  monotonic = buildPythonPackage rec {
-    name = "monotonic-0.4";
-
-    __propagatedImpureHostDeps = stdenv.lib.optional stdenv.isDarwin "/usr/lib/libc.dylib";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/m/monotonic/${name}.tar.gz";
-      sha256 = "1diab6hfh3jpa1f0scpqaqrawk4g97ss4v7gkn2yw8znvdm6abw5";
-    };
-
-    patchPhase = optionalString stdenv.isLinux ''
-      substituteInPlace monotonic.py --replace \
-        "ctypes.util.find_library('c')" "'${stdenv.glibc.out}/lib/libc.so.6'"
-    '';
-  };
+  monotonic = callPackage ../development/python-modules/monotonic { };
 
   MySQL_python = buildPythonPackage rec {
     name = "MySQL-python-1.2.5";
