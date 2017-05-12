@@ -152,7 +152,7 @@ in {
       gid = config.ids.gids.keystone;
     }];
 
-    systemd.services.keystone-all = {
+    systemd.services.keystone-admin = {
         description = "OpenStack Keystone Daemon";
         after = [ "network.target"];
         path = [ cfg.package pkgs.mysql pkgs.curl pkgs.pythonPackages.keystoneclient pkgs.gawk ];
@@ -169,52 +169,44 @@ in {
 
           # Initialise the database
           ${cfg.package}/bin/keystone-manage --config-file=${keystoneConf} db_sync
-          # Set up the keystone's PKI infrastructure
-          ${cfg.package}/bin/keystone-manage --config-file=${keystoneConf} pki_setup --keystone-user keystone --keystone-group keystone
-        '';
-        postStart = optionalString cfg.bootstrap.enable ''
-          set -eu
-          # Wait until the keystone is available for use
-          count=0
-          while ! curl --fail -s  http://localhost:35357/v2.0 > /dev/null 
-          do
-              if [ $count -eq 30 ]
-              then
-                  echo "Tried 30 times, giving up..."
-                  exit 1
-              fi
-
-              echo "Keystone not yet started. Waiting for 1 second..."
-              count=$((count++))
-              sleep 1
-          done
-
-          # We use the service token to create a first admin user
-          export OS_SERVICE_ENDPOINT=http://localhost:35357/v2.0
-          export OS_SERVICE_TOKEN=${getSecret cfg.adminToken}
-
-          # If the tenant service doesn't exist, we consider
-          # keystone is not initialized
-          if ! keystone tenant-get service
-          then
-              keystone tenant-create --name service
-              keystone tenant-create --name ${cfg.bootstrap.adminTenant}
-              keystone user-create --name ${cfg.bootstrap.adminUsername} --tenant ${cfg.bootstrap.adminTenant} --pass ${getSecret cfg.bootstrap.adminPassword}
-              keystone role-create --name admin
-              keystone role-create --name Member
-              keystone user-role-add --tenant ${cfg.bootstrap.adminTenant} --user ${cfg.bootstrap.adminUsername} --role admin
-              keystone service-create --type identity --name keystone
-              ID=$(keystone service-get keystone | awk '/ id / { print $4 }')
-              keystone endpoint-create --region RegionOne --service $ID --publicurl ${cfg.bootstrap.endpointPublic} --adminurl http://localhost:35357/v2.0 --internalurl http://localhost:5000/v2.0
-          fi
+          # Initialize Fernet key repositories
+	  mkdir -p /etc/keystone/fernet-keys
+	  chown -R keystone:keystone /etc/keystone
+          ${cfg.package}/bin/keystone-manage --config-file=${keystoneConf} fernet_setup --keystone-user keystone --keystone-group keystone
+	  ${cfg.package}/bin/keystone-manage --config-file=${keystoneConf} credential_setup --keystone-user keystone --keystone-group keystone
+	  chown -R keystone:keystone /etc/keystone
+	  chmod 700 /etc/keystone/fernet-keys/
+	  '' +
+	  optionalString cfg.bootstrap.enable ''
+	  ${cfg.package}/bin/keystone-manage --config-file=/var/lib/keystone/keystone.conf bootstrap --bootstrap-username ${cfg.bootstrap.adminUsername} \
+	                                                                                             --bootstrap-password ${getSecret cfg.bootstrap.adminPassword} \
+                                                                                                     --bootstrap-project-name ${cfg.bootstrap.adminTenant} \
+												     --bootstrap-admin-url http://localhost:35357/v3/ \
+												     --bootstrap-internal-url http://localhost:5000/v3/ \
+												     --bootstrap-public-url http://localhost:5000/v3/ \
+												     --bootstrap-region-id RegionOne \
         '';
         serviceConfig = {
           PermissionsStartOnly = true; # preStart must be run as root
           TimeoutStartSec = "600"; # 10min for initial db migrations
           User = "keystone";
           Group = "keystone";
-          ExecStart = "${cfg.package}/bin/keystone-all --config-file=${keystoneConf}";
+          ExecStart = "${cfg.package}/bin/keystone-wsgi-admin --port 35357 -- --config-file=${keystoneConf}";
         };
       };
+
+    systemd.services.keystone-public = {
+        description = "OpenStack Keystone Daemon";
+        after = [ "network.target" "keystone-admin.service"];
+        path = [ cfg.package pkgs.mysql pkgs.curl pkgs.pythonPackages.keystoneclient pkgs.gawk ];
+        wantedBy = [ "multi-user.target" ];
+
+        serviceConfig = {
+          User = "keystone";
+          Group = "keystone";
+          ExecStart = "${cfg.package}/bin/keystone-wsgi-public --port 5000 -- --config-file=${keystoneConf}";
+        };
+      };
+
   };
 }

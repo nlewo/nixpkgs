@@ -22,7 +22,7 @@ python2Packages.buildPythonApplication rec {
 
   # https://github.com/openstack/nova/blob/stable/liberty/requirements.txt
   propagatedBuildInputs = with python2Packages; [
-    pbr sqlalchemy boto decorator eventlet jinja2 lxml routes cryptography
+    pbr sqlalchemy boto_openstack_ocata decorator eventlet jinja2 lxml routes cryptography
     webob greenlet PasteDeploy paste prettytable sqlalchemy_migrate netaddr
     netifaces paramiko Babel iso8601 jsonschema keystoneclient requests six
     stevedore websockify rfc3986 os-brick psutil_1 alembic psycopg2 pymysql

@@ -2090,7 +2090,8 @@ in {
       sha256 = "0vw4d53jbbb2kdl7l891h8iyxklqcd6ldvgcyhw9hl40ljdhv1wz";
     };
 
-    propagatedBuildInputs = [ self.requests ];
+    # FIXME build of keystoneauth1 fails otherwise
+    propagatedBuildInputs = [ self.requests_openstack_ocata ];
 
     doCheck = false;
 
@@ -2292,6 +2293,8 @@ in {
       maintainers = with maintainers; [ ericsagnes ];
     };
   };
+
+  ceilometerclient = callPackage ../development/python-modules/python-ceilometerclient { };
 
   capstone = buildPythonPackage rec {
     name = "capstone-3.0.4";
@@ -3038,6 +3041,10 @@ in {
         Services.  This includes S3, SQS, EC2, among others.
       '';
     };
+  };
+
+  boto_openstack_ocata = self.boto.override rec {
+    propagatedBuildInputs = lists.remove self.requests self.boto.propagatedBuildInputs  ++ [ self.requests_openstack_ocata ];
   };
 
   boto3 = buildPythonPackage rec {
@@ -4116,6 +4123,10 @@ in {
     };
   });
 
+  consul_openstack_ocata = self.consul.override rec {
+    propagatedBuildInputs = lists.remove self.requests self.consul.propagatedBuildInputs  ++ [ self.requests_openstack_ocata ];
+  };
+
   contexter = buildPythonPackage rec {
     name = "contexter-${version}";
     version = "0.1.3";
@@ -4457,39 +4468,7 @@ in {
     };
   };
 
-  novaclient = buildPythonPackage rec {
-    name = "novaclient-${version}";
-    version = "2.31.0";
-
-    src = pkgs.fetchurl {
-      url = "https://github.com/openstack/python-novaclient/archive/${version}.tar.gz";
-      sha256 = "0cd49yz9qhpv1srg6wwjnivyb3i8zjxda0h439158qv9w6bfqhdf";
-    };
-
-    PBR_VERSION = "${version}";
-
-    buildInputs = with self; [
-      pbr testtools testscenarios testrepository requests-mock fixtures ];
-    propagatedBuildInputs = with self; [
-      Babel argparse prettytable requests simplejson six iso8601
-      keystoneclient tempest-lib ];
-
-    # TODO: check if removing this test is really harmless
-    preCheck = ''
-      substituteInPlace novaclient/tests/unit/v2/test_servers.py --replace "test_get_password" "noop"
-    '';
-
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-
-    meta = {
-      homepage = https://github.com/openstack/python-novaclient/;
-      description = "Client library and command line tool for the OpenStack Nova API";
-      license = stdenv.lib.licenses.asl20;
-      platforms = stdenv.lib.platforms.linux;
-    };
-  };
+  novaclient = callPackage ../development/python-modules/python-novaclient { };
 
   tablib = buildPythonPackage rec {
     name = "tablib-${version}";
@@ -4571,33 +4550,13 @@ in {
     pythonPackages = self;
   };
 
-  openstackclient = buildPythonPackage rec {
-    name = "openstackclient-${version}";
-    version = "1.7.1";
+  openstackclient = callPackage ../development/python-modules/openstackclient { };
 
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/p/python-openstackclient/python-openstackclient-${version}.tar.gz";
-      sha256 = "0h1jkrwx06l32k50zq5gs9iba132q2x2jjb3z5gkxxlcd3apk8y9";
-    };
+  deprecation = callPackage ../development/python-modules/deprecation { };
 
-    propagatedBuildInputs = with self; [
-     pbr six Babel cliff os-client-config oslo-config oslo-i18n oslo-utils
-     glanceclient keystoneclient novaclient cinderclient neutronclient requests
-     stevedore cliff-tablib
-    ];
-    buildInputs = with self; [
-     requests-mock
-    ];
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
+  openstacksdk = callPackage ../development/python-modules/openstacksdk { };
 
-    meta = with stdenv.lib; {
-      homepage = "http://wiki.openstack.org/OpenStackClient";
-    };
-  };
-
-
+  osc-lib = callPackage ../development/python-modules/osc-lib { };
 
   idna = buildPythonPackage rec {
     pname = "idna";
@@ -6292,8 +6251,7 @@ in {
 
   urllib3 = let
     disabled_tests = [
-      "test_headers" "test_headerdict" "test_can_validate_ip_san" "test_delayed_body_read_timeout"
-      "test_timeout_errors_cause_retries" "test_select_multiple_interrupts_with_event"
+      "test_can_validate_ip_san"
     ];
   in buildPythonPackage rec {
     pname = "urllib3";
@@ -6308,6 +6266,13 @@ in {
     NOSE_EXCLUDE=concatStringsSep "," disabled_tests;
 
     checkPhase = ''
+      # Not worth the trouble
+      rm test/with_dummyserver/test_poolmanager.py
+      rm test/with_dummyserver/test_proxy_poolmanager.py
+      rm test/with_dummyserver/test_socketlevel.py
+      # pypy: https://github.com/shazow/urllib3/issues/736
+      rm test/with_dummyserver/test_connectionpool.py
+      rm test/with_dummyserver/test_chunked_transfer.py
       nosetests -v --cover-min-percentage 1
     '';
 
@@ -7320,6 +7285,8 @@ in {
       platforms = platforms.unix;
     };
   };
+
+  hacking = callPackage ../development/python-modules/hacking { };
 
   helper = buildPythonPackage rec {
     pname = "helper";
@@ -8502,12 +8469,12 @@ in {
   };
 
   passlib = buildPythonPackage rec {
-    version = "1.6.5";
+    version = "1.7.1";
     name    = "passlib-${version}";
 
     src = pkgs.fetchurl {
       url = "mirror://pypi/p/passlib/passlib-${version}.tar.gz";
-      sha256 = "1z27wdxs5rj5xhhqfzvzn3yg682irkxw6dcs5jj7mcf97psk8gd8";
+      sha256 = "1q2khqpj9rlcgdmkypjdq1kswvhjf72bq0zk2cv669cc2dj8z51x";
     };
 
     buildInputs = with self; [ nose ];
@@ -11064,6 +11031,28 @@ in {
     };
   };
 
+  flake8_2_5_5 = buildPythonPackage rec {
+    pname = "flake8";
+    version = "2.5.5";
+    name = "${pname}-${version}";
+
+    src = fetchPypi {
+      inherit pname version;
+      sha256 = "326a54ace7878a5ad1538110f2145bc6a134df43fff290475fd4e7ba38a6deea";
+    };
+
+    buildInputs = with self; [ pytest mock pytestrunner ];
+    propagatedBuildInputs = with self; [ pyflakes_0_8_1 pycodestyle mccabe_0_2_1 pep8_1_5_7 ]
+      ++ optionals (pythonOlder "3.4") [ enum34 ]
+      ++ optionals (pythonOlder "3.2") [ configparser ];
+
+    meta = {
+      description = "Code checking using pep8 and pyflakes";
+      homepage = http://pypi.python.org/pypi/flake8;
+      license = licenses.mit;
+    };
+  };
+
   flake8-blind-except = callPackage ../development/python-modules/flake8-blind-except { };
 
   flake8-debugger = callPackage ../development/python-modules/flake8-debugger { };
@@ -13253,26 +13242,6 @@ in {
     };
   };
 
-  kombu = buildPythonPackage rec {
-    name = "kombu-${version}";
-    version = "4.0.2";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/k/kombu/${name}.tar.gz";
-      sha256 = "18hiricdnbnlz6hx3hbaa4dni6npv8rbid4dhf7k02k16qm6zz6h";
-    };
-
-    buildInputs = with self; [ pytest case pytz ];
-
-    propagatedBuildInputs = with self; [ amqp ];
-
-    meta = {
-      description = "Messaging library for Python";
-      homepage    = "http://github.com/celery/kombu";
-      license     = licenses.bsd3;
-    };
-  };
-
   konfig = buildPythonPackage rec {
     name = "konfig-${version}";
     version = "0.9";
@@ -13931,6 +13900,44 @@ in {
       homepage = "https://github.com/flintwork/mccabe";
       license = licenses.mit;
       maintainers = with maintainers; [ garbas ];
+    };
+  });
+
+  mccabe_0_5 = buildPythonPackage (rec {
+    name = "mccabe-0.5.2";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/m/mccabe/${name}.tar.gz";
+      sha256 = "1zss8c5cn8wvxsbjzv70dxymybh3cjzrjl19vxfbnyvmidng0wrl";
+    };
+
+    buildInputs = with self; [ pytestrunner pytest ];
+
+    meta = {
+      description = "McCabe checker, plugin for flake8";
+      homepage = "https://github.com/flintwork/mccabe";
+      license = licenses.mit;
+      maintainers = with maintainers; [ ];
+    };
+  });
+
+  mccabe_0_2_1 = buildPythonPackage (rec {
+    pname = "mccabe";
+    version = "0.2.1";
+    name = "${pname}-${version}";
+
+    src = fetchPypi {
+      inherit pname version;
+      sha256 = "5a2a170e47de5593a6abfae1e9542bd2c3924ac62bbe4e6ed96c953c0352243a";
+    };
+
+    buildInputs = with self; [ pytestrunner pytest ];
+
+    meta = {
+      description = "McCabe checker, plugin for flake8";
+      homepage = "https://github.com/flintwork/mccabe";
+      license = licenses.mit;
+      maintainers = with maintainers; [ ];
     };
   });
 
@@ -16315,20 +16322,7 @@ in {
     };
   };
 
-  oslosphinx = buildPythonPackage rec {
-    name = "oslosphinx-3.3.1";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/oslosphinx/${name}.tar.gz";
-      sha256 = "1rjiiahw2y7pg5rl15fvhmfyh26vm433000nwp7c94khx7w85w75";
-    };
-
-    doCheck = false;
-
-    propagatedBuildInputs = with self; [
-      pbr requests sphinx_1_2
-    ];
-  };
+  oslosphinx = callPackage ../development/python-modules/oslosphinx { };
 
   tempest-lib = buildPythonPackage rec {
     name = "tempest-lib-${version}";
@@ -16355,20 +16349,24 @@ in {
 
   bandit = buildPythonPackage rec {
     name = "bandit-${version}";
-    version = "0.16.1";
+    version = "1.4.0";
     disabled = isPy33;
     doCheck = !isPyPy; # a test fails
 
     src = pkgs.fetchurl {
       url = "mirror://pypi/b/bandit/${name}.tar.gz";
-      sha256 = "0qd9kxknac5n5xfl5zjnlmk6jr94krkcx29zgyna8p9lyb828hsk";
+      sha256 = "1m5bm42120zyazky4k0lp3d9r0jwhjmp6sb108xfr0vz952p15yb";
     };
 
-    propagatedBuildInputs = with self; [ pbr six pyyaml appdirs stevedore ];
+    propagatedBuildInputs = with self; [ pbr six pyyaml appdirs stevedore GitPython ];
     buildInputs = with self; [ beautifulsoup4 oslosphinx testtools testscenarios
-                               testrepository fixtures mock ];
+                               testrepository fixtures mock pkgs.git ];
     patchPhase = ''
       sed -i 's@python@${python.interpreter}@' .testr.conf
+    '';
+    checkPhase = ''
+      export PATH=$PATH:$out/bin
+      ${python.interpreter} setup.py test
     '';
   };
 
@@ -16418,49 +16416,9 @@ in {
     };
   };
 
+  oslo-utils = callPackage ../development/python-modules/oslo.utils { };
 
-  oslo-utils = buildPythonPackage rec {
-    name = "oslo.utils-${version}";
-    version = "2.6.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/oslo.utils/${name}.tar.gz";
-      sha256 = "1prgi03nxkcykyja821qkycsqlnpyzw17mpvj8qf3pjmgb9gv1fy";
-    };
-
-    propagatedBuildInputs = with self; [ pbr Babel six iso8601 pytz netaddr netifaces
-                                         monotonic oslo-i18n wrapt debtcollector ];
-    buildInputs = with self; [ oslotest mock coverage oslosphinx ];
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-  };
-
-  oslo-middleware = buildPythonPackage rec {
-    name = "oslo.middleware-${version}";
-    version = "2.9.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/oslo.middleware/${name}.tar.gz";
-      sha256 = "14acinchdpmc1in39mz9kh1h2rd1ygwg3zdhbwzrlhy8wbzzi4w9";
-    };
-
-    propagatedBuildInputs = with self; [
-      oslo-i18n six oslo-utils pbr oslo-config Babel oslo-context stevedore
-      jinja2 webob debtcollector
-    ];
-    buildInputs = with self; [
-      coverage testtools oslosphinx oslotest
-    ];
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-      sed -i '/ordereddict/d' requirements.txt
-    '';
-
-    meta = with stdenv.lib; {
-      homepage = "http://wiki.openstack.org/wiki/Oslo#oslo.middleware";
-    };
-  };
+  oslo-middleware = callPackage ../development/python-modules/oslo.middleware { };
 
   oslo-versionedobjects = buildPythonPackage rec {
      name = "oslo.versionedobjects-${version}";
@@ -16500,54 +16458,9 @@ in {
      };
    };
 
-   futurist = buildPythonPackage rec {
-     name = "futurist-${version}";
-     version = "0.7.0";
+  futurist =  callPackage ../development/python-modules/futurist { };
 
-     src = pkgs.fetchurl {
-       url = "mirror://pypi/f/futurist/${name}.tar.gz";
-       sha256 = "0wf0k9xf5xzmi79418xq8zxwr7w7a4g4alv3dds9afb2l8bh9crg";
-     };
-
-     patchPhase = ''
-       sed -i "s/test_gather_stats/noop/" futurist/tests/test_executors.py
-     '';
-
-     propagatedBuildInputs = with self; [
-       contextlib2 pbr six monotonic futures eventlet
-     ];
-     buildInputs = with self; [
-       testtools testscenarios testrepository oslotest subunit
-     ];
-
-   };
-
-  oslo-messaging = buildPythonPackage rec {
-    name = "oslo.messaging-${version}";
-    version = "2.7.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/oslo.messaging/${name}.tar.gz";
-      sha256 = "1af7l4ri3xfjcnjp2yhngz34h3ls00yyj1x8i64dxb86ryy43kd1";
-    };
-
-    propagatedBuildInputs = with self; [
-      pbr oslo-config oslo-context oslo-log oslo-utils oslo-serialization
-      oslo-i18n stevedore six eventlet greenlet webob pyyaml kombu_3 trollius
-      aioeventlet cachetools oslo-middleware futurist redis oslo-service
-      eventlet pyzmq
-    ];
-
-    buildInputs = with self; [
-      oslotest mock mox3 subunit testtools testscenarios testrepository
-      fixtures oslosphinx
-    ];
-
-    preBuild = ''
-      # transient failure https://bugs.launchpad.net/oslo.messaging/+bug/1510481
-      sed -i 's/test_send_receive/noop/' oslo_messaging/tests/drivers/test_impl_rabbit.py
-    '';
-  };
+  oslo-messaging = callPackage ../development/python-modules/oslo.messaging { };
 
   os-brick = buildPythonPackage rec {
    name = "os-brick-${version}";
@@ -16596,31 +16509,7 @@ in {
     '';
   };
 
-  cinderclient = buildPythonPackage rec {
-    name = "cinderclient-${version}";
-    version = "1.4.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/p/python-cinderclient/python-cinderclient-${version}.tar.gz";
-      sha256 = "1vfcjljfad3034bfhfcrfhphym1ik6qk42nrxzl0gqb9408n6k3l";
-    };
-
-    propagatedBuildInputs = with self; [
-      six Babel simplejson requests keystoneclient prettytable argparse pbr
-    ];
-    buildInputs = with self; [
-      testrepository requests-mock
-    ];
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-
-    meta = with stdenv.lib; {
-      description = "Python bindings to the OpenStack Cinder API";
-      homepage = "http://www.openstack.org/";
-      broken = true;
-    };
-  };
+  cinderclient = callPackage ../development/python-modules/python-cinderclient { };
 
   neutronclient = buildPythonPackage rec {
     name = "neutronclient-${version}";
@@ -16651,28 +16540,7 @@ in {
     };
   };
 
-  cliff = buildPythonPackage rec {
-    name = "cliff-${version}";
-    version = "1.15.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/c/cliff/${name}.tar.gz";
-      sha256 = "1rrbq1nvc84x417hbfm9sc1scia16nilr8nm8ycm8iq5jkh6zfpm";
-    };
-
-    propagatedBuildInputs = with self; [
-      argparse pyyaml pbr six cmd2 stevedore unicodecsv prettytable pyparsing
-    ];
-    buildInputs = with self; [
-      httplib2 oslosphinx coverage mock nose tempest-lib
-    ];
-
-    meta = with stdenv.lib; {
-      homepage = "https://launchpad.net/python-cliff";
-      # requires an update, incompatible with current dependencies (pbr)
-      broken = true;
-    };
-  };
+  cliff = callPackage ../development/python-modules/cliff { };
 
   cmd2 = buildPythonPackage rec {
     name = "cmd2-${version}";
@@ -16697,23 +16565,7 @@ in {
   };
 
 
-  oslo-db = buildPythonPackage rec {
-    name = "oslo.db-${version}";
-    version = "3.0.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/oslo.db/${name}.tar.gz";
-      sha256 = "0jjimsfl53wigzf92dhns813n65qcwilcqlj32m86rxrcz0pjgph";
-    };
-
-    propagatedBuildInputs = with self; [
-      six stevedore sqlalchemy_migrate sqlalchemy oslo-utils oslo-context
-      oslo-config oslo-i18n iso8601 Babel alembic pbr psycopg2
-    ];
-    buildInputs = with self; [
-      tempest-lib testresources mock oslotest
-    ];
-  };
+  oslo-db = callPackage ../development/python-modules/oslo.db { };
 
   oslo-rootwrap = buildPythonPackage rec {
     name = "oslo.rootwrap-${version}";
@@ -16740,35 +16592,7 @@ in {
     doCheck = false;
   };
 
-  glanceclient = buildPythonPackage rec {
-   name = "glanceclient-${version}";
-   version = "1.1.0";
-
-   src = pkgs.fetchurl {
-     url = "mirror://pypi/p/python-glanceclient/python-glanceclient-${version}.tar.gz";
-     sha256 = "0ppjafsmf29ps23jsw6g2xm66pdi5jdzpywglqqm28b8fj931zsr";
-   };
-
-   propagatedBuildInputs = with self; [
-     oslo-i18n oslo-utils six requests keystoneclient prettytable Babel pbr
-     argparse warlock
-   ];
-   buildInputs = with self; [
-     tempest-lib requests-mock
-   ];
-
-   checkPhase = ''
-     ${python.interpreter} -m subunit.run discover -t ./ .
-   '';
-
-   meta = with stdenv.lib; {
-     description = "Python bindings to the OpenStack Images API";
-     homepage = "http://www.openstack.org/";
-
-     # requires an update, incompatible with current dependencies (pbr)
-     broken = true;
-   };
- };
+  glanceclient = callPackage ../development/python-modules/python-glanceclient { };
 
  warlock = buildPythonPackage rec {
    name = "warlock-${version}";
@@ -16792,55 +16616,8 @@ in {
  };
 
 
-  oslo-service = buildPythonPackage rec {
-    name = "oslo.service-${version}";
-    version = "0.10.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/oslo.service/oslo.service-0.10.0.tar.gz";
-      sha256 = "1pcnimc2a50arcgq355ad9lramf6y1yv974swgfj6w90v5c6p9gz";
-    };
-
-    propagatedBuildInputs = with self; [
-      repoze_lru PasteDeploy Babel oslo-context debtcollector
-      oslo-concurrency wrapt eventlet six oslo-serialization greenlet paste
-      oslo-config monotonic iso8601 oslo-log pytz routes msgpack
-      oslo-i18n argparse oslo-utils pbr enum34 netaddr stevedore netifaces
-      pyinotify webob retrying pyinotify ];
-    buildInputs = with self; [
-      oslosphinx oslotest pkgs.procps mock mox3 fixtures subunit testrepository
-      testtools testscenarios
-    ];
-
-    # failing tests
-    preCheck = ''
-      rm oslo_service/tests/test_service.py
-    '';
-
-    meta = with stdenv.lib; {
-      homepage = "http://wiki.openstack.org/wiki/Oslo#oslo.service";
-    };
-  };
-
-  oslo-cache = buildPythonPackage rec {
-    name = "oslo.cache-${version}";
-    version = "0.9.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/oslo.cache/${name}.tar.gz";
-      sha256 = "0dzvm5xkfj1alf469d7v3syig9f91kjh4p55k57ykgaww3y4cdjp";
-    };
-
-    propagatedBuildInputs = with self; [
-      Babel dogpile_cache six oslo-config oslo-i18n oslo-log oslo-utils
-    ];
-    buildInputs = with self; [
-      oslosphinx oslotest memcached pymongo
-    ];
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-  };
+  oslo-service = callPackage ../development/python-modules/oslo.service { };
+  oslo-cache = callPackage ../development/python-modules/oslo.cache { };
 
   pecan = buildPythonPackage rec {
     name = "pecan-${version}";
@@ -17000,7 +16777,7 @@ in {
     ];
     buildInputs = with self; [
       mock fixtures subunit requests-mock testrepository testscenarios testtools
-      oslotest oslosphinx boto oslo-vmware
+      oslotest oslosphinx boto_openstack_ocata oslo-vmware
     ];
 
     meta = with stdenv.lib; {
@@ -17165,27 +16942,7 @@ in {
     };
   };
 
-  osprofiler = buildPythonPackage rec {
-    name = "osprofiler-${version}";
-    version = "0.3.0";
-    disabled = isPyPy;
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/osprofiler/${name}.tar.gz";
-      sha256 = "01rjym49nn4ry1pr2n8fyal1hf17jqhp2yihg8gr15nfjc5iszkx";
-    };
-
-    propagatedBuildInputs = with self; [
-      pbr argparse six webob
-    ];
-    buildInputs = with self; [
-      oslosphinx coverage mock subunit testrepository testtools
-    ];
-
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-  };
+  osprofiler = callPackage ../development/python-modules/osprofiler { };
 
   FormEncode = buildPythonPackage rec {
     name = "FormEncode-${version}";
@@ -17248,22 +17005,7 @@ in {
     };
   };
 
-  oslo-policy = buildPythonPackage rec {
-    name = "oslo.policy-${version}";
-    version = "0.12.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/oslo.policy/${name}.tar.gz";
-      sha256 = "06apaj6fwg7f2g5psmxzr5a9apj2l4k2y8kl1hqzyssykblij8ss";
-    };
-
-    propagatedBuildInputs = with self; [
-      requests oslo-config oslo-i18n oslo-serialization oslo-utils six
-    ];
-    buildInputs = with self; [
-      oslosphinx httpretty oslotest
-    ];
-  };
+  oslo-policy = callPackage ../development/python-modules/oslo.policy { };
 
   ldappool = buildPythonPackage rec {
     name = "ldappool-${version}";
@@ -17300,32 +17042,7 @@ in {
     };
   };
 
-
-  oslo-concurrency = buildPythonPackage rec {
-   name = "oslo-concurrency-${version}";
-   version = "2.7.0";
-
-   src = pkgs.fetchurl {
-     url = "mirror://pypi/o/oslo.concurrency/oslo.concurrency-2.7.0.tar.gz";
-     sha256 = "1yp8c87yi6fx1qbq4y1xkx47iiifg7jqzpcghivhxqra8vna185d";
-   };
-
-   propagatedBuildInputs = with self; [
-     oslo-i18n argparse six wrapt oslo-utils pbr enum34 Babel netaddr monotonic
-     iso8601 oslo-config pytz netifaces stevedore debtcollector retrying fasteners
-     eventlet
-   ];
-   buildInputs = with self; [
-     oslosphinx fixtures futures coverage oslotest
-   ];
-
-   # too much magic in tests
-   doCheck = false;
-
-   meta = with stdenv.lib; {
-     homepage = http://launchpad.net/oslo;
-   };
- };
+ oslo-concurrency = callPackage ../development/python-modules/oslo.concurrency { };
 
  retrying = buildPythonPackage rec {
     name = "retrying-${version}";
@@ -17394,72 +17111,13 @@ in {
     };
   };
 
-  oslo-log = buildPythonPackage rec {
-    name = "oslo.log-${version}";
-    version = "1.12.1";
+  oslo-log = callPackage ../development/python-modules/oslo.log { };
 
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/oslo.log/${name}.tar.gz";
-      sha256 = "10x596r19zjla5n1bf04j5vncx0c9gpc5wc2jlmgjbl3cyx3vgsv";
-    };
+  oslo-context = callPackage ../development/python-modules/oslo.context { };
 
-    propagatedBuildInputs = with self; [
-      pbr Babel six iso8601 debtcollector
-      oslo-utils oslo-i18n oslo-config oslo-serialization oslo-context
-    ] ++ stdenv.lib.optional stdenv.isLinux pyinotify;
-    buildInputs = with self; [ oslotest oslosphinx ];
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-  };
+  oslo-i18n = callPackage ../development/python-modules/oslo.i18n { };
 
-  oslo-context = buildPythonPackage rec {
-    name = "oslo.context-${version}";
-    version = "0.7.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/oslo.context/${name}.tar.gz";
-      sha256 = "18fmg9dhgngshk63wfb3ddrgx5br8jxkk3x30z40741mslp1fdjy";
-    };
-
-    propagatedBuildInputs = with self; [ pbr Babel ];
-    buildInputs = with self; [ oslotest coverage oslosphinx ];
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-  };
-
-  oslo-i18n = buildPythonPackage rec {
-    name = "oslo.i18n-${version}";
-    version = "2.7.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/oslo.i18n/${name}.tar.gz";
-      sha256 = "11jgcvj36g97awh7fpar4xxgwrvzfahq6rw7xxqac32ia790ylcz";
-    };
-
-    propagatedBuildInputs = with self; [ pbr Babel six oslo-config ];
-    buildInputs = with self; [ mock coverage oslotest ];
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-  };
-
-  oslo-config = buildPythonPackage rec {
-    name = "oslo.config-${version}";
-    version = "2.5.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/oslo.config/${name}.tar.gz";
-      sha256 = "043mavrzj7vjn7kh1dddci4sf67qwqnnn6cm0k1d19alks9hismz";
-    };
-
-    propagatedBuildInputs = with self; [ argparse pbr six netaddr stevedore ];
-    buildInputs = [ self.mock ];
-
-    # TODO: circular import on oslo-i18n
-    doCheck = false;
-  };
+  oslo-config = callPackage ../development/python-modules/oslo.config { };
 
   oslotest = buildPythonPackage rec {
     name = "oslotest-${version}";
@@ -17478,45 +17136,9 @@ in {
       testscenarios testtools mock mox3 oslo-config os-client-config ];
   };
 
-  os-client-config = buildPythonPackage rec {
-    name = "os-client-config-${version}";
-    version = "1.8.1";
+  os-client-config = callPackage ../development/python-modules/os-client-config { };
 
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/o/os-client-config/${name}.tar.gz";
-      sha256 = "10hz4yp594mi1p7v1pvgsmx5w2rnb9y8d0jvb2lfv03ljnwzv8jz";
-    };
-
-    buildInputs = with self; [ pbr testtools testscenarios testrepository fixtures ];
-    propagatedBuildInputs = with self; [ appdirs pyyaml keystoneauth1 ];
-
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-    # TODO: circular import on oslotest
-    preCheck = ''
-      rm os_client_config/tests/{test_config,test_cloud_config,test_environ}.py
-    '';
-  };
-
-  keystoneauth1 = buildPythonPackage rec {
-    name = "keystoneauth1-${version}";
-    version = "1.1.0";
-    disabled = isPyPy; # a test fails
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/k/keystoneauth1/${name}.tar.gz";
-      sha256 = "05fc6xsp5mal52ijvj84sf7mrw706ihadfdf5mnq9zxn7pfl4118";
-    };
-
-    buildInputs = with self; [ pbr testtools testresources testrepository mock
-                               pep8 fixtures mox3 requests-mock ];
-    propagatedBuildInputs = with self; [ argparse iso8601 requests six stevedore
-                                         webob oslo-config ];
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-  };
+  keystoneauth1 = callPackage ../development/python-modules/keystoneauth1 { };
 
   requests-mock = buildPythonPackage rec {
     name = "requests-mock-${version}";
@@ -17532,8 +17154,14 @@ in {
     '';
 
     buildInputs = with self; [ pbr testtools testrepository mock ];
+    # FIXME
     propagatedBuildInputs = with self; [ six requests ];
   };
+
+  requests-mock_openstack_ocata = self.requests-mock.override rec {
+    propagatedBuildInputs = lists.remove self.requests self.pysaml2.propagatedBuildInputs  ++ [ self.requests_openstack_ocata ];
+  };
+
 
   mox3 = buildPythonPackage rec {
     name = "mox3-${version}";
@@ -17552,21 +17180,7 @@ in {
     propagatedBuildInputs = with self; [ pbr fixtures ];
   };
 
-  debtcollector = buildPythonPackage rec {
-    name = "debtcollector-${version}";
-    version = "0.9.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/d/debtcollector/${name}.tar.gz";
-      sha256 = "1mvdxdrnwlgfqg26s5himkjq6f06r2khlrignx36kkbyaix6j9xb";
-    };
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-
-    buildInputs = with self; [ pbr Babel six wrapt testtools testscenarios
-      testrepository subunit coverage oslotest ];
-  };
+  debtcollector = callPackage ../development/python-modules/debtcollector { };
 
   wrapt = buildPythonPackage rec {
     name = "wrapt-${version}";
@@ -18048,6 +17662,24 @@ in {
     src = pkgs.fetchurl {
       url = "mirror://pypi/p/pep8/${name}.tar.gz";
       sha256 = "a113d5f5ad7a7abacef9df5ec3f2af23a20a28005921577b15dd584d099d5900";
+    };
+
+    meta = {
+      homepage = "http://pep8.readthedocs.org/";
+      description = "Python style guide checker";
+      license = licenses.mit;
+      maintainers = with maintainers; [ garbas ];
+    };
+  };
+
+  pep8_1_5_7 = buildPythonPackage rec {
+    pname = "pep8";
+    version = "1.5.7";
+    name = "${pname}-${version}";
+
+    src = fetchPypi {
+      inherit pname version;
+      sha256 = "15b42131b25f376165d195fe4e17b0a28311182aaf9330d5eb575bbeda5a6989";
     };
 
     meta = {
@@ -19057,7 +18689,7 @@ in {
 
     propagatedBuildInputs = with self; [
       repoze_who paste cryptography pycrypto pyopenssl ipaddress six cffi idna
-      enum34 pytz setuptools zope_interface dateutil requests pyasn1 webob decorator pycparser
+      enum34 pytz setuptools zope_interface dateutil requests_openstack_ocata pyasn1 webob decorator pycparser
       defusedxml
     ];
     buildInputs = with self; [
@@ -19074,6 +18706,10 @@ in {
     meta = with stdenv.lib; {
       homepage = "https://github.com/rohe/pysaml2";
     };
+  };
+
+  pysaml2_openstack_ocata = self.pysaml2.override rec {
+    propagatedBuildInputs = lists.remove self.requests self.pysaml2.propagatedBuildInputs  ++ [ self.requests_openstack_ocata ];
   };
 
   mongodict = buildPythonPackage rec {
@@ -19773,6 +19409,28 @@ in {
       description = "A simple program which checks Python source files for errors";
       license = licenses.mit;
       maintainers = with maintainers; [ garbas ];
+    };
+  };
+
+  pyflakes_0_8_1 = buildPythonPackage rec {
+    pname = "pyflakes";
+    version = "0.8.1";
+    name = "${pname}-${version}";
+
+    src = fetchPypi {
+      inherit pname version;
+      sha256 = "3fa80a10b36d51686bf7744f5dc99622cd5c98ce8ed64022e629868aafc17769";
+    };
+
+    buildInputs = with self; [ unittest2 ];
+
+    doCheck = !isPyPy;
+#    force-rebuild = 1;  # fix transient test suite error at http://hydra.nixos.org/build/45083762
+
+    meta = {
+      homepage = https://launchpad.net/pyflakes;
+      description = "A simple program which checks Python source files for errors";
+      license = licenses.mit;
     };
   };
 
@@ -21607,6 +21265,10 @@ in {
       license = licenses.asl20;
     };
   };
+
+  requests_openstack_ocata = callPackage ../development/python-modules/requests/2.12.5.nix { };
+
+  requestsexceptions = callPackage ../development/python-modules/requestsexceptions { };
 
   requests_download = buildPythonPackage rec {
     pname = "requests_download";
@@ -24119,6 +23781,10 @@ in {
     doCheck = false;
   };
 
+  sphinx_openstack_ocata = self.sphinx_1_2.override rec {
+    propagatedBuildInputs = lists.remove self.requests self.sphinx_1_2.propagatedBuildInputs  ++ [ self.requests_openstack_ocata ];
+  };
+ 
   hieroglyph = callPackage ../development/python-modules/hieroglyph { };
 
   sphinx_rtd_theme = buildPythonPackage (rec {
@@ -24887,66 +24553,9 @@ in {
     };
   };
 
-  keystoneclient = buildPythonPackage rec {
-    name = "keystoneclient-${version}";
-    version = "1.8.1";
+  keystoneclient = callPackage ../development/python-modules/keystoneclient { };
 
-    src = pkgs.fetchurl {
-      url = "https://github.com/openstack/python-keystoneclient/archive/${version}.tar.gz";
-      sha256 = "0lijri0xa5fvmynvq148z13kw4xd3bam4zrfd8aj0gb3lnzh9y6v";
-    };
-
-    PBR_VERSION = "${version}";
-
-    buildInputs = with self; [
-        pbr testtools testresources testrepository requests-mock fixtures pkgs.openssl
-        oslotest pep8 ];
-    propagatedBuildInputs = with self; [
-        oslo-serialization oslo-config oslo-i18n oslo-utils
-        Babel argparse prettytable requests six iso8601 stevedore
-        netaddr debtcollector bandit webob mock pycrypto ];
-
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-
-    doCheck = false; # The checkPhase below is broken
-
-    checkPhase = ''
-      patchShebangs run_tests.sh
-      ./run_tests.sh
-    '';
-
-    meta = {
-      homepage = https://github.com/openstack/python-novaclient/;
-      description = "Client library and command line tool for the OpenStack Nova API";
-      license = stdenv.lib.licenses.asl20;
-      platforms = stdenv.lib.platforms.linux;
-    };
-  };
-
-  keystonemiddleware = buildPythonPackage rec {
-    name = "keystonemiddleware-${version}";
-    version = "2.4.1";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/k/keystonemiddleware/${name}.tar.gz";
-      sha256 = "0avrn1f897rnam9wfdanpdwsmn8is3ncfh3nnzq3d1m31b1yqqr6";
-    };
-
-    buildInputs = with self; [
-      fixtures mock pycrypto oslosphinx oslotest stevedore testrepository
-      testresources testtools bandit requests-mock memcached
-      pkgs.openssl
-    ];
-    propagatedBuildInputs = with self; [
-      pbr Babel oslo-config oslo-context oslo-i18n oslo-serialization oslo-utils
-      requests six webob keystoneclient pycadf oslo-messaging
-    ];
-
-    # lots of "unhashable type" errors
-    doCheck = false;
-  };
+  keystonemiddleware = callPackage ../development/python-modules/keystonemiddleware { };
 
   testscenarios = buildPythonPackage rec {
     name = "testscenarios-${version}";
@@ -26068,7 +25677,7 @@ in {
         # (the trailing " -" is required to only replace things like these one:
         # "$VIRTUALENVWRAPPER_PYTHON" -c "import os,[...] and not in
         # if-statements or anything like that.
-        # ...and yes, this "patch" is hacky :)
+        # ...and yes, this "patch" is hack :)
         substituteInPlace "$file" --replace '"$VIRTUALENVWRAPPER_PYTHON" -' 'env PYTHONPATH="$VIRTUALENVWRAPPER_PYTHONPATH" "$VIRTUALENVWRAPPER_PYTHON" -'
       done
     '';
@@ -26268,24 +25877,7 @@ EOF
     };
   };
 
-  webob = buildPythonPackage rec {
-    version = "1.4.1";
-    name = "webob-${version}";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/W/WebOb/WebOb-${version}.tar.gz";
-      sha256 = "1nz9m6ijf46wfn33zfza13c0k1n4kjnmn3icdlrlgz5yj21vky0j";
-    };
-
-    propagatedBuildInputs = with self; [ nose ];
-
-    meta = {
-      description = "WSGI request and response object";
-      homepage = http://pythonpaste.org/webob/;
-      platforms = platforms.all;
-    };
-  };
-
+  webob = callPackage ../development/python-modules/WebOb { };
 
   websockify = buildPythonPackage rec {
     version = "0.7.0";
@@ -28120,6 +27712,7 @@ EOF
     };
   };
 
+  positional = callPackage ../development/python-modules/positional { };
 
   pyspotify = buildPythonPackage rec {
     name = "pyspotify-${version}";
