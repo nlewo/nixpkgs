@@ -10852,25 +10852,7 @@ in {
     };
   };
 
-  eventlet = buildPythonPackage rec {
-    name = "eventlet-0.17.4";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/e/eventlet/${name}.tar.gz";
-      sha256 = "0vam0qfm8p5jkpp2cv12r5bnpnv902ld7q074h7x5y5g9rqyj8c7";
-    };
-
-    buildInputs = with self; [ nose httplib2 pyopenssl  ];
-
-    doCheck = false;  # too much transient errors to bother
-
-    propagatedBuildInputs = optionals (!isPyPy) [ self.greenlet ];
-
-    meta = {
-      homepage = http://pypi.python.org/pypi/eventlet/;
-      description = "A concurrent networking library for Python";
-    };
-  };
+  eventlet = callPackage ../development/python-modules/eventlet {};
 
   exifread = buildPythonPackage rec {
     name = "ExifRead-2.1.2";
