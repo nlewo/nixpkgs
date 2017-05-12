@@ -21861,6 +21861,7 @@ in {
     };
   };
 
+  reno = callPackage ../development/python-modules/reno { git = pkgs.git; gnupg = pkgs.gnupg1; };
 
   restview = buildPythonPackage rec {
     name = "restview-${version}";
