@@ -4579,33 +4579,7 @@ in {
     pythonPackages = self;
   };
 
-  openstackclient = buildPythonPackage rec {
-    name = "openstackclient-${version}";
-    version = "1.7.1";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/p/python-openstackclient/python-openstackclient-${version}.tar.gz";
-      sha256 = "0h1jkrwx06l32k50zq5gs9iba132q2x2jjb3z5gkxxlcd3apk8y9";
-    };
-
-    propagatedBuildInputs = with self; [
-     pbr six Babel cliff os-client-config oslo-config oslo-i18n oslo-utils
-     glanceclient keystoneclient novaclient cinderclient neutronclient requests
-     stevedore cliff-tablib
-    ];
-    buildInputs = with self; [
-     requests-mock
-    ];
-    patchPhase = ''
-      sed -i 's@python@${python.interpreter}@' .testr.conf
-    '';
-
-    meta = with stdenv.lib; {
-      homepage = "http://wiki.openstack.org/OpenStackClient";
-    };
-  };
-
-
+  openstackclient = callPackage ../development/python-modules/openstackclient { };
 
   idna = buildPythonPackage rec {
     pname = "idna";
