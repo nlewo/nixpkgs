@@ -15101,7 +15101,7 @@ with pkgs;
 
   # Open Stack
   nova = callPackage ../applications/virtualization/openstack/nova.nix { };
-  keystone = callPackage ../applications/virtualization/openstack/keystone.nix { };
+  keystone = callPackage ../applications/virtualization/openstack/keystone { };
   neutron = callPackage ../applications/virtualization/openstack/neutron.nix { };
   glance = callPackage ../applications/virtualization/openstack/glance.nix { };
 

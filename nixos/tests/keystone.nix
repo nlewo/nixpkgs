@@ -14,7 +14,7 @@ let
     GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY '${keystoneMysqlPassword}';
   '';
   # The admin keystone account
-  adminOpenstackCmd = "OS_TENANT_NAME=admin OS_USERNAME=admin OS_PASSWORD=${keystoneAdminPassword} OS_AUTH_URL=http://localhost:5000/v3 OS_IDENTITY_API_VERSION=3 openstack";
+  adminOpenstackCmd = "OS_PROJECT_NAME=admin OS_USERNAME=admin OS_PASSWORD=${keystoneAdminPassword} OS_AUTH_URL=http://localhost:35357/v3 OS_IDENTITY_API_VERSION=3 OS_PROJECT_DOMAIN_NAME=Default OS_USER_DOMAIN_NAME=Default openstack";
   # The created demo keystone account
   demoOpenstackCmd = "OS_TENANT_NAME=demo OS_USERNAME=demo OS_PASSWORD=demo OS_AUTH_URL=http://localhost:5000/v3 OS_IDENTITY_API_VERSION=3 openstack";
 
@@ -30,8 +30,14 @@ in makeTest {
       boot.postBootCommands = "echo ${keystoneMysqlPassword} > ${keystoneMysqlPasswordFile}";
 
       services.mysql.enable = true;
+      services.mysql.package = pkgs.mysql;
       services.mysql.initialScript = createKeystoneDb;
 
+      services.openssh.enable = true;
+      services.openssh.permitRootLogin = "yes";
+      users.extraUsers.root.password = "root";
+      networking.firewall.enable = false;
+      
       virtualisation = {
 
         openstack.keystone = {
@@ -53,28 +59,28 @@ in makeTest {
 	    storage = "fromNixStore";
 	  };
 	};
-
+	
         memorySize = 2096;
         diskSize = 4 * 1024;
 	};
+	systemd.services."keystone-admin.service".unitConfig.After = "mysal.service";
 
-      environment.systemPackages = with pkgs.pythonPackages; with pkgs; [
-        openstackclient
-      ];
+      environment.systemPackages = [ pkgs.pythonPackages.openstackclient ];
     };
 
   testScript =
     ''
-     $machine->waitForUnit("keystone-all.service");
+     $machine->waitForUnit("keystone-admin.service");
+     $machine->waitForUnit("keystone-public.service");
 
      # Verify that admin ccount is working
-     $machine->succeed("${adminOpenstackCmd} token issue");
+     $machine->waitUntilSucceeds("${adminOpenstackCmd} token issue");
 
      # Try to create a new user
-     $machine->succeed("${adminOpenstackCmd} project create --domain default --description 'Demo Project' demo");
-     $machine->succeed("${adminOpenstackCmd} user create --domain default --password demo demo");
-     $machine->succeed("${adminOpenstackCmd} role create user");
-     $machine->succeed("${adminOpenstackCmd} role add --project demo --user demo user");
+     $machine->waitUntilSucceeds("${adminOpenstackCmd} project create --domain default --description 'Demo Project' demo");
+     $machine->waitUntilSucceeds("${adminOpenstackCmd} user create --domain default --password demo demo");
+     $machine->waitUntilSucceeds("${adminOpenstackCmd} role create user");
+     $machine->waitUntilSucceeds("${adminOpenstackCmd} role add --project demo --user demo user");
 
      # Verify this new account is working
      $machine->succeed("${demoOpenstackCmd} token issue");
