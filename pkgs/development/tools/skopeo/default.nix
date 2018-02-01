@@ -1,4 +1,4 @@
-{ stdenv, lib, buildGoPackage, fetchFromGitHub, gpgme, libgpgerror, devicemapper, btrfs-progs, pkgconfig, ostree }:
+{ stdenv, lib, buildGoPackage, fetchFromGitHub, gpgme, libgpgerror, devicemapper, btrfs-progs, pkgconfig, ostree, libselinux }:
 
 with stdenv.lib;
 
@@ -11,13 +11,13 @@ buildGoPackage rec {
   excludedPackages = "integration";
 
   nativeBuildInputs = [ pkgconfig ];
-  buildInputs = [ gpgme libgpgerror devicemapper btrfs-progs ostree ];
+  buildInputs = [ gpgme libgpgerror devicemapper btrfs-progs ostree libselinux ];
 
   src = fetchFromGitHub {
-    inherit rev;
+    rev = "c18015e6fc01acc4ad1f9ac5393a89baeebb70f8";
     owner = "projectatomic";
     repo = "skopeo";
-    sha256 = "1xwwzxjczz8qdk1rf0h78qd3vk9mxxb8yi6f8kfqvcdcsvkajd5g";
+    sha256 = "0xjfkv7284wm92hfgx7y7k2ll50b6391f02hsyx07g1m62y9xfgw";
   };
 
   patches = [

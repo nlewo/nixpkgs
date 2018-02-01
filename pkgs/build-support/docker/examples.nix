@@ -87,7 +87,7 @@ rec {
     imageName = "nixos/nix";
     imageTag = "1.11";
     # this hash will need change if the tag is updated at docker hub
-    sha256 = "1745wvz6mjvmyfbjxyay6nv7h5bzs09f2sank94zqf9v7y4rs3in";
+    sha256 = "0mqjy3zq2v6rrhizgb9nvhczl87lcfphq9601wcprdika2jz7qh8";
   };
 
   # 5. example of multiple contents, emacs and vi happily coexisting
