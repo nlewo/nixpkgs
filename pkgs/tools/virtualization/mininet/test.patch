@@ -1,0 +1,44 @@
+diff --git a/Makefile b/Makefile
+index a5ead63..fcf964e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -8,8 +8,9 @@ PYSRC = $(MININET) $(TEST) $(EXAMPLES) $(BIN)
+ MNEXEC = mnexec
+ MANPAGES = mn.1 mnexec.1
+ P8IGN = E251,E201,E302,E202,E126,E127,E203,E226
+-BINDIR = /usr/bin
+-MANDIR = /usr/share/man/man1
++PREFIX ?= /usr
++BINDIR ?= $(PREFIX)/bin
++MANDIR ?= $(PREFIX)/share/man/man1
+ DOCDIRS = doc/html doc/latex
+ PDF = doc/latex/refman.pdf
+ 
+@@ -47,8 +48,10 @@ mnexec: mnexec.c $(MN) mininet/net.py
+ 	cc $(CFLAGS) $(LDFLAGS) -DVERSION=\"`PYTHONPATH=. $(PYMN) --version`\" $< -o $@
+ 
+ install: $(MNEXEC) $(MANPAGES)
+-	install $(MNEXEC) $(BINDIR)
+-	install $(MANPAGES) $(MANDIR)
++	install -D $(MNEXEC) $(BINDIR)/$(MNEXEC)
++	install -D -t $(MANDIR) $(MANPAGES)
++
++install-python:
+ 	python setup.py install
+ 
+ develop: $(MNEXEC) $(MANPAGES)
+diff --git a/mininet/node.py b/mininet/node.py
+index 704c798..42b3780 100644
+--- a/mininet/node.py
++++ b/mininet/node.py
+@@ -135,7 +135,9 @@ def startShell( self, mnopts=None ):
+         # -s: pass $* to shell, and make process easy to find in ps
+         # prompt is set to sentinel chr( 127 )
+         cmd = [ 'mnexec', opts, 'env', 'PS1=' + chr( 127 ),
+-                'bash', '--norc', '-is', 'mininet:' + self.name ]
++                'bash', '--norc', '--noediting',
++                '-is', 'mininet:' + self.name ]
++
+         # Spawn a shell subprocess in a pseudo-tty, to disable buffering
+         # in the subprocess and insulate it from signals (e.g. SIGINT)
+         # received by the parent

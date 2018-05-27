@@ -20534,6 +20534,8 @@ with pkgs;
     flex = flex_2_5_35;
   };
 
+  mininet = callPackage ../tools/virtualization/mininet { };
+
   msieve = callPackage ../applications/science/math/msieve { };
 
   weka = callPackage ../applications/science/math/weka { };
