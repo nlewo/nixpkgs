@@ -24,7 +24,7 @@ stdenv.mkDerivation rec {
     sha256 = "18w9vfszhnx4j3b8dd1rvrg8xnfk6rgh066hfpzspzqngd5qzakg";
   };
 
-  patches = [ ./test.patch ];
+  patches = [ ./Makefile.patch ];
 
   makeFlags = [
     "mnexec"

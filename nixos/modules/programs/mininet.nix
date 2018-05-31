@@ -34,12 +34,13 @@ in
 
     virtualisation.vswitch.enable = true;
 
-    # environment.systemPackages = with pkgs; [
+    environment.systemPackages = with pkgs; [
+      pkgs.mn
     #   wrappedMnexec
     #   iperf
-    #   telnet # mn will stop if no telnet is available
+      # telnet # mn will stop if no telnet is available
     #   ethtool iproute socat
-    # ];
+    ];
 
     security.wrappers = {
       mnexec.source = "${pkgs.mininet}/bin/mnexec";
