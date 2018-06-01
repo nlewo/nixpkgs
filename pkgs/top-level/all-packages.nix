@@ -20571,19 +20571,32 @@ with pkgs;
 
   megam = callPackage ../applications/science/misc/megam { };
 
+  toto = (pythonPackages.toPythonApplication (
+    pythonPackages.libxml2));
+  # (pkgs.mininet.override{ inherit python; pythonSupport = true;}).py
+  # );
+  # ((mininet-python).py);
 
-  # with pythonPackages; toPythonApplication
-  mn = let
-      mnApp = with pythonPackages; toPythonApplication mininet-python;
-    in  pkgs.runCommand "mnexec-wrapper"
+  mn-wrapped = pkgs.runCommand "mnexec-wrapper"
     { buildInputs = [ pkgs.makeWrapper ]; }
     ''
       # This wrapper prevents from polluting PATH
-      makeWrapper ${mnApp}/bin/mn \
+      makeWrapper ${mn}/bin/mn \
         $out/bin/mn \
         --prefix PATH : "${pkgs.telnet}/bin/telnet"
-
     '';
+
+  # # with pythonPackages; toPythonApplication
+  # mn = let
+  #     mnApp = with pythonPackages; toPythonApplication mininet-python;
+  #   in  pkgs.runCommand "mnexec-wrapper"
+  #   { buildInputs = [ pkgs.makeWrapper ]; }
+  #   ''
+  #     # This wrapper prevents from polluting PATH
+  #     makeWrapper ${mnApp}/bin/mn \
+  #       $out/bin/mn \
+  #       --prefix PATH : "${pkgs.telnet}/bin/telnet"
+  #   '';
 
   ns-3 = callPackage ../development/libraries/science/networking/ns3 { };
 

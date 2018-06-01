@@ -7,45 +7,34 @@ with lib;
 let
   cfg  = config.programs.mininet;
 
-  pyEnv = pkgs.python.withPackages(ps: [ ps.mininet-python ]);
+  # pyEnv = pkgs.python.withPackages(ps: [ ps.mininet-python ]);
 
+  generatedPath = with pkgs; makeSearchPath "bin"  [
+    # mn will stop if no telnet is available
+    # telnet
+    iperf ethtool iproute socat
+  ];
 
-  path = with pkgs; makeSearchPath "bin"  [
-      iperf
-      telnet # mn will stop if no telnet is available
-      ethtool iproute socat ];
-
-  wrappedMnexec = pkgs.runCommand "mnexec-wrapper"
+  mnexecWrapped = pkgs.runCommand "mnexec-wrapper"
     { buildInputs = [ pkgs.makeWrapper ]; }
     ''
       # This wrapper prevents from polluting PATH
-      makeWrapper ${pkgs.mnexec}/bin/mnexec \
+      makeWrapper ${pkgs.mininet}/bin/mnexec \
         $out/bin/mnexec \
         --prefix PATH : "${generatedPath}"
-
     '';
 in
 {
   options.programs.mininet.enable = mkEnableOption ''
-      Whether to enable mininet.
-    '';
+    Whether to enable mininet.
+  '';
 
   config = mkIf cfg.enable {
 
     virtualisation.vswitch.enable = true;
 
-    environment.systemPackages = with pkgs; [
-      pkgs.mn
-    #   wrappedMnexec
-    #   iperf
-      # telnet # mn will stop if no telnet is available
-    #   ethtool iproute socat
-    ];
-
     security.wrappers = {
-      mnexec.source = "${pkgs.mininet}/bin/mnexec";
-      # I still have to run it with sudo
-      # mn.source = "${pyEnv}/bin/mn";
+      mnexec.source = mnexecWrapped + "/bin/mnexec";
     };
   };
 }
