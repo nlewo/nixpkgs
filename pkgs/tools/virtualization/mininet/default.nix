@@ -4,6 +4,9 @@
 , python
 , help2man
 , pythonSupport ? true
+, telnet
+, makeWrapper
+, pythonPackages
 }:
 
 let
@@ -15,7 +18,7 @@ stdenv.mkDerivation rec {
   name = "mininet-${version}";
   version = "2.2.2";
 
-  outputs = [ "out"  ] ++ lib.optional pythonSupport "py";
+  outputs = [ "out"  ];
 
   src = fetchFromGitHub {
     owner = "mininet";
@@ -36,15 +39,21 @@ stdenv.mkDerivation rec {
     "PREFIX=$(out)"
   ];
 
-  preInstall= lib.optionalString pythonSupport ''
+  preInstall= ''
     mkdir -p $out $py
     # without --root, install fails
-    ${pyEnv.interpreter} setup.py install --root="/" --prefix=$py
+    ${pyEnv.interpreter} setup.py install --root="/" --prefix=$out
+  '';
+  
+  postFixup = ''
+    wrapPythonProgramsIn $out/bin "$out"
+    wrapProgram $out/bin/mnexec \
+      --prefix PATH : "${telnet}/bin"
   '';
 
   doCheck = false;
 
-  buildInputs = [ which help2man ] ++ lib.optional pythonSupport pyEnv;
+  buildInputs = [ pythonPackages.wrapPython makeWrapper which help2man pyEnv ];
 
   meta = with lib; {
     description = "Emulator for rapid prototyping of Software Defined Networks";
