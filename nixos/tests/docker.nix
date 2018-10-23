@@ -13,6 +13,15 @@ import ./make-test.nix ({ pkgs, ...} : {
           virtualisation.docker.enable = true;
           virtualisation.docker.package = pkgs.docker;
 
+          virtualisation.dockerPreloadImages.images = [ pkgs.dockerTools.examples.nix pkgs.dockerTools.examples.bash ];
+
+      services.openssh.enable = true;
+      services.openssh.permitRootLogin = "yes";
+      services.openssh.extraConfig = "PermitEmptyPasswords yes";
+      users.extraUsers.root.password = "";
+
+
+
           users.users = {
             noprivs = {
               isNormalUser = true;
