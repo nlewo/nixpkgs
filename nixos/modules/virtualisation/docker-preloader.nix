@@ -98,6 +98,7 @@ in
     # to /var/lib/docker/ in order to make image available.
     systemd.services.docker-preloader = {
       description = "Preloaded Docker images";
+      before = ["docker.service"];
       wantedBy = ["docker.service"];
       after = ["network.target"];
       path = with pkgs; [ mount rsync jq ];
