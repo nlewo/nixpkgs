@@ -1,4 +1,4 @@
-# nix-build '<nixpkgs/nixos>' -A config.system.build.novaImage --arg configuration "{ imports = [ ./nixos/maintainers/scripts/openstack/nova-image.nix ]; }"
+# nix-build '<nixpkgs/nixos>' -A config.system.build.openstackImage --arg configuration "{ imports = [ ./nixos/maintainers/scripts/openstack/openstack-image.nix ]; }"
 
 { config, lib, pkgs, ... }:
 
@@ -7,10 +7,10 @@ with lib;
 {
   imports =
     [ ../../../modules/installer/cd-dvd/channel.nix
-      ../../../modules/virtualisation/nova-config.nix
+      ../../../modules/virtualisation/openstack-config.nix
     ];
 
-  system.build.novaImage = import ../../../lib/make-disk-image.nix {
+  system.build.openstackImage = import ../../../lib/make-disk-image.nix {
     inherit lib config;
     pkgs = import ../../../.. { inherit (pkgs) system; }; # ensure we use the regular qemu-kvm package
     diskSize = 8192;
