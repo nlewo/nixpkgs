@@ -246,4 +246,14 @@ rec {
     contents = [ pkgs.bash pkgs.hello ];
     maxLayers = 2;
   };
+
+  # 15. Create a layered image with more packages than max layers.
+  # glibc should go into layer #1, hello and bash should go into layer #2.
+  max-layered-image = pkgs.dockerTools.buildLayeredImage {
+    name = "max-layered-image";
+    tag = "latest";
+    config.Cmd = [ "${pkgs.hello}/bin/hello" ];
+    contents = [ pkgs.hello pkgs.bash pkgs.glibc ];
+    maxLayers = 3;
+  };
 }
