@@ -247,13 +247,24 @@ rec {
     maxLayers = 2;
   };
 
-  # 15. Create a layered image with more packages than max layers.
-  # glibc should go into layer #1, hello and bash should go into layer #2.
-  max-layered-image = pkgs.dockerTools.buildLayeredImage {
-    name = "max-layered-image";
+  # 16. Create a layered image with more packages than max layers.
+  # coreutils, file1 and file2 are part of the same layer
+  bulk-layer = pkgs.dockerTools.buildLayeredImage {
+    name = "bulk-layer";
     tag = "latest";
-    config.Cmd = [ "${pkgs.hello}/bin/hello" ];
-    contents = [ pkgs.hello pkgs.bash pkgs.glibc ];
-    maxLayers = 3;
+    contents = with pkgs; [
+      coreutils
+      (writeTextFile {
+        name = "file1";
+        text = "file1";
+        destination = "/file1";
+      })
+      (writeTextFile {
+        name = "file2";
+        text = "file2";
+        destination = "/file2";
+      })
+    ];
+    maxLayers = 2;
   };
 }
