@@ -157,10 +157,15 @@ let
       EOF
     '';
 
+  rest = import ./rest.nix { inherit pkgs sources copySources generatedSources; };
+
 in rec {
   inherit generatedSources;
 
   inherit (optionsDoc) optionsJSON optionsXML optionsDocBook;
+
+  # This is only for debugging purposes
+  inherit (rest) manualReSTGenerated manualReSTHTML manualReSTFiles;
 
   # Generate the NixOS manual.
   manualHTML = runCommand "nixos-manual-html"
