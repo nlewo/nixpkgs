@@ -12,39 +12,39 @@ VirtualBox appliance, it is available at
 page <https://nixos.org/nixos/download.html>`_. If you want to set up a VirtualBox guest manually, follow these
 instructions:
 
-#
+#.
 
-  Add a New Machine in VirtualBox with OS Type "Linux / Other Linux"
+   Add a New Machine in VirtualBox with OS Type "Linux / Other Linux"
 
-#
+#.
 
-  Base Memory Size: 768 MB or higher.
+   Base Memory Size: 768 MB or higher.
 
-#
+#.
 
-  New Hard Disk of 8 GB or higher.
+   New Hard Disk of 8 GB or higher.
 
-#
+#.
 
-  Mount the CD-ROM with the NixOS ISO (by clicking on CD/DVD-ROM)
+   Mount the CD-ROM with the NixOS ISO (by clicking on CD/DVD-ROM)
 
-#
+#.
 
-  Click on Settings / System / Processor and enable PAE/NX
+   Click on Settings / System / Processor and enable PAE/NX
 
-#
+#.
 
-  Click on Settings / System / Acceleration and enable "VT-x/AMD-V"
-  acceleration
+   Click on Settings / System / Acceleration and enable "VT-x/AMD-V"
+   acceleration
 
-#
+#.
 
-  Click on Settings / Display / Screen and select VBoxVGA as Graphics Controller
+   Click on Settings / Display / Screen and select VBoxVGA as Graphics Controller
 
-#
+#.
 
-  Save the settings, start the virtual machine, and continue installation
-  like normal
+   Save the settings, start the virtual machine, and continue installation
+   like normal
 
 There are a few modifications you should make in configuration.nix. Enable
 booting:

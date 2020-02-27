@@ -85,44 +85,44 @@ Here's an example partition scheme for UEFI, using
    You can safely ignore :command:`parted`'s informational message
    about needing to update /etc/fstab.
 
-#
+#.
 
-  Create a *GPT* partition table.
-  ::
+   Create a *GPT* partition table.
+   ::
 
-      # parted /dev/sda -- mklabel gpt
+       # parted /dev/sda -- mklabel gpt
 
-#
+#.
 
-  Add the *root* partition. This will fill the disk
-  except for the end part, where the swap will live, and the space left in
-  front (512MiB) which will be used by the boot partition.
-  ::
+   Add the *root* partition. This will fill the disk
+   except for the end part, where the swap will live, and the space left in
+   front (512MiB) which will be used by the boot partition.
+   ::
 
-      # parted /dev/sda -- mkpart primary 512MiB -8GiB
+       # parted /dev/sda -- mkpart primary 512MiB -8GiB
 
-#
+#.
 
-  Next, add a *swap* partition. The size required will
-  vary according to needs, here a 8GiB one is created.
-  ::
+   Next, add a *swap* partition. The size required will
+   vary according to needs, here a 8GiB one is created.
+   ::
 
-      # parted /dev/sda -- mkpart primary linux-swap -8GiB 100%
+       # parted /dev/sda -- mkpart primary linux-swap -8GiB 100%
 
-  .. note::
+   .. note::
 
-     The swap partition size rules are no different than for other Linux
-     distributions.
+      The swap partition size rules are no different than for other Linux
+      distributions.
 
-#
+#.
 
-  Finally, the *boot* partition. NixOS by default uses
-  the ESP (EFI system partition) as its */boot*
-  partition. It uses the initially reserved 512MiB at the start of the
-  disk.
-  ::
+   Finally, the *boot* partition. NixOS by default uses
+   the ESP (EFI system partition) as its */boot*
+   partition. It uses the initially reserved 512MiB at the start of the
+   disk.
+   ::
 
-      # parted /dev/sda -- mkpart ESP fat32 1MiB 512MiB# parted /dev/sda -- set 3 boot on
+       # parted /dev/sda -- mkpart ESP fat32 1MiB 512MiB# parted /dev/sda -- set 3 boot on
 
 Once complete, you can follow with
 :ref:`sec-installation-partitioning-formatting`.
@@ -140,33 +140,33 @@ Here's an example partition scheme for Legacy Boot, using
    You can safely ignore :command:`parted`'s informational message
    about needing to update /etc/fstab.
 
-#
+#.
 
-  Create a *MBR* partition table.
-  ::
+   Create a *MBR* partition table.
+   ::
 
-      # parted /dev/sda -- mklabel msdos
+       # parted /dev/sda -- mklabel msdos
 
-#
+#.
 
-  Add the *root* partition. This will fill the the disk
-  except for the end part, where the swap will live.
-  ::
+   Add the *root* partition. This will fill the the disk
+   except for the end part, where the swap will live.
+   ::
 
-      # parted /dev/sda -- mkpart primary 1MiB -8GiB
+       # parted /dev/sda -- mkpart primary 1MiB -8GiB
 
-#
+#.
 
-  Finally, add a *swap* partition. The size required
-  will vary according to needs, here a 8GiB one is created.
-  ::
+   Finally, add a *swap* partition. The size required
+   will vary according to needs, here a 8GiB one is created.
+   ::
 
-      # parted /dev/sda -- mkpart primary linux-swap -8GiB 100%
+       # parted /dev/sda -- mkpart primary linux-swap -8GiB 100%
 
-  .. note::
+   .. note::
 
-     The swap partition size rules are no different than for other Linux
-     distributions.
+      The swap partition size rules are no different than for other Linux
+      distributions.
 
 Once complete, you can follow with
 :ref:`sec-installation-partitioning-formatting`.
@@ -223,185 +223,185 @@ Use the following commands:
 Installing
 ~~~~~~~~~~
 
-#
+#.
 
-  Mount the target file system on which NixOS should be installed on
-  :file:`/mnt`, e.g.
-  ::
+   Mount the target file system on which NixOS should be installed on
+   :file:`/mnt`, e.g.
+   ::
 
-      # mount /dev/disk/by-label/nixos /mnt
+       # mount /dev/disk/by-label/nixos /mnt
 
-#
+#.
 
-  UEFI systems
+   UEFI systems
 
-      Mount the boot file system on :file:`/mnt/boot`, e.g.
-      ::
+       Mount the boot file system on :file:`/mnt/boot`, e.g.
+       ::
 
-          # mkdir -p /mnt/boot# mount /dev/disk/by-label/boot /mnt/boot
+           # mkdir -p /mnt/boot# mount /dev/disk/by-label/boot /mnt/boot
 
-#
+#.
 
-  If your machine has a limited amount of memory, you may want to activate
-  swap devices now (:command:`swapon
-  *device*`). The installer (or rather,
-  the build actions that it may spawn) may need quite a bit of RAM,
-  depending on your configuration.
-  ::
+   If your machine has a limited amount of memory, you may want to activate
+   swap devices now (:command:`swapon
+   *device*`). The installer (or rather,
+   the build actions that it may spawn) may need quite a bit of RAM,
+   depending on your configuration.
+   ::
 
-      # swapon /dev/sda2
+       # swapon /dev/sda2
 
-#
+#.
 
-  You now need to create a file
-  :file:`/mnt/etc/nixos/configuration.nix` that specifies the
-  intended configuration of the system. This is because NixOS has a
-  *declarative* configuration model: you create or edit a
-  description of the desired configuration of your system, and then NixOS
-  takes care of making it happen. The syntax of the NixOS configuration file
-  is described in :ref:`sec-configuration-syntax`, while a list
-  of available configuration options appears in
-  :ref:`ch-options`. A minimal example is shown in
-  :ref:`ex-config`.
+   You now need to create a file
+   :file:`/mnt/etc/nixos/configuration.nix` that specifies the
+   intended configuration of the system. This is because NixOS has a
+   *declarative* configuration model: you create or edit a
+   description of the desired configuration of your system, and then NixOS
+   takes care of making it happen. The syntax of the NixOS configuration file
+   is described in :ref:`sec-configuration-syntax`, while a list
+   of available configuration options appears in
+   :ref:`ch-options`. A minimal example is shown in
+   :ref:`ex-config`.
 
-  The command :command:`nixos-generate-config` can generate an
-  initial configuration file for you:
-  ::
+   The command :command:`nixos-generate-config` can generate an
+   initial configuration file for you:
+   ::
 
-      # nixos-generate-config --root /mnt
+       # nixos-generate-config --root /mnt
 
-  You should then edit :file:`/mnt/etc/nixos/configuration.nix`
-  to suit your needs:
-  ::
+   You should then edit :file:`/mnt/etc/nixos/configuration.nix`
+   to suit your needs:
+   ::
 
-      # nano /mnt/etc/nixos/configuration.nix
+       # nano /mnt/etc/nixos/configuration.nix
 
-  If you’re using the graphical ISO image, other editors may be available
-  (such as :command:`vim`). If you have network access, you can also
-  install other editors — for instance, you can install Emacs by running
-  ``nix-env -f '<nixpkgs>' -iA emacs``.
+   If you’re using the graphical ISO image, other editors may be available
+   (such as :command:`vim`). If you have network access, you can also
+   install other editors — for instance, you can install Emacs by running
+   ``nix-env -f '<nixpkgs>' -iA emacs``.
 
-  BIOS systems
+   BIOS systems
 
-      You *must* set the option
-      :ref:`opt-boot.loader.grub.device` to specify on which disk
-      the GRUB boot loader is to be installed. Without it, NixOS cannot boot.
+       You *must* set the option
+       :ref:`opt-boot.loader.grub.device` to specify on which disk
+       the GRUB boot loader is to be installed. Without it, NixOS cannot boot.
 
-  UEFI systems
+   UEFI systems
 
-      You *must* set the option
-      :ref:`opt-boot.loader.systemd-boot.enable` to
-      ``true``. :command:`nixos-generate-config`
-      should do this automatically for new configurations when booted in UEFI
-      mode.
+       You *must* set the option
+       :ref:`opt-boot.loader.systemd-boot.enable` to
+       ``true``. :command:`nixos-generate-config`
+       should do this automatically for new configurations when booted in UEFI
+       mode.
 
-      You may want to look at the options starting with
+       You may want to look at the options starting with
 
-      and
+       and
 
-      as well.
+       as well.
 
-  If there are other operating systems running on the machine before
-  installing NixOS, the :ref:`opt-boot.loader.grub.useOSProber`
-  option can be set to ``true`` to automatically add them to
-  the grub menu.
+   If there are other operating systems running on the machine before
+   installing NixOS, the :ref:`opt-boot.loader.grub.useOSProber`
+   option can be set to ``true`` to automatically add them to
+   the grub menu.
 
-  If you need to configure networking for your machine the configuration
-  options are described in :ref:`sec-networking`. In particular,
-  while wifi is supported on the installation image, it is not enabled by
-  default in the configuration generated by
-  :command:`nixos-generate-config`.
+   If you need to configure networking for your machine the configuration
+   options are described in :ref:`sec-networking`. In particular,
+   while wifi is supported on the installation image, it is not enabled by
+   default in the configuration generated by
+   :command:`nixos-generate-config`.
 
-  Another critical option is , specifying the
-  file systems that need to be mounted by NixOS. However, you typically
-  don’t need to set it yourself, because
-  :command:`nixos-generate-config` sets it automatically in
-  :file:`/mnt/etc/nixos/hardware-configuration.nix` from your
-  currently mounted file systems. (The configuration file
-  :file:`hardware-configuration.nix` is included from
-  :file:`configuration.nix` and will be overwritten by future
-  invocations of :command:`nixos-generate-config`; thus, you
-  generally should not modify it.) Additionally, you may want to look at
-  `Hardware
-  configuration for known-hardware <https://github.com/NixOS/nixos-hardware>`_ at this point or after
-  installation.
+   Another critical option is , specifying the
+   file systems that need to be mounted by NixOS. However, you typically
+   don’t need to set it yourself, because
+   :command:`nixos-generate-config` sets it automatically in
+   :file:`/mnt/etc/nixos/hardware-configuration.nix` from your
+   currently mounted file systems. (The configuration file
+   :file:`hardware-configuration.nix` is included from
+   :file:`configuration.nix` and will be overwritten by future
+   invocations of :command:`nixos-generate-config`; thus, you
+   generally should not modify it.) Additionally, you may want to look at
+   `Hardware
+   configuration for known-hardware <https://github.com/NixOS/nixos-hardware>`_ at this point or after
+   installation.
 
-  .. note::
+   .. note::
 
-     Depending on your hardware configuration or type of file system, you may
-     need to set the option to
-     include the kernel modules that are necessary for mounting the root file
-     system, otherwise the installed system will not be able to boot. (If this
-     happens, boot from the installation media again, mount the target file
-     system on :file:`/mnt`, fix
-     :file:`/mnt/etc/nixos/configuration.nix` and rerun
-     :file:`nixos-install`.) In most cases,
-     :command:`nixos-generate-config` will figure out the required
-     modules.
+      Depending on your hardware configuration or type of file system, you may
+      need to set the option to
+      include the kernel modules that are necessary for mounting the root file
+      system, otherwise the installed system will not be able to boot. (If this
+      happens, boot from the installation media again, mount the target file
+      system on :file:`/mnt`, fix
+      :file:`/mnt/etc/nixos/configuration.nix` and rerun
+      :file:`nixos-install`.) In most cases,
+      :command:`nixos-generate-config` will figure out the required
+      modules.
 
-#
+#.
 
-  Do the installation:
-  ::
+   Do the installation:
+   ::
 
-      # nixos-install
+       # nixos-install
 
-  This will install your system based on the configuration you provided.
-  If anything fails due to a configuration problem or any other issue
-  (such as a network outage while downloading binaries from the NixOS
-  binary cache), you can re-run :command:`nixos-install` after
-  fixing your :file:`configuration.nix`.
+   This will install your system based on the configuration you provided.
+   If anything fails due to a configuration problem or any other issue
+   (such as a network outage while downloading binaries from the NixOS
+   binary cache), you can re-run :command:`nixos-install` after
+   fixing your :file:`configuration.nix`.
 
-  As the last step, :command:`nixos-install` will ask you to set the
-  password for the ``root`` user, e.g.
-  ::
+   As the last step, :command:`nixos-install` will ask you to set the
+   password for the ``root`` user, e.g.
+   ::
 
-      setting root password...
-      Enter new UNIX password: \***
-      Retype new UNIX password: \***
+       setting root password...
+       Enter new UNIX password: \***
+       Retype new UNIX password: \***
 
-  .. note::
+   .. note::
 
-     For unattended installations, it is possible to use
-     :command:`nixos-install --no-root-passwd` in order to disable
-     the password prompt entirely.
+      For unattended installations, it is possible to use
+      :command:`nixos-install --no-root-passwd` in order to disable
+      the password prompt entirely.
 
-#
+#.
 
-  If everything went well:
-  ::
+   If everything went well:
+   ::
 
-      # reboot
+       # reboot
 
-#
+#.
 
-  You should now be able to boot into the installed NixOS. The GRUB boot
-  menu shows a list of *available configurations*
-  (initially just one). Every time you change the NixOS configuration (see
-  `Changing Configuration <None>`_
-  ), a new item is added to the menu. This allows you to easily roll back to
-  a previous configuration if something goes wrong.
+   You should now be able to boot into the installed NixOS. The GRUB boot
+   menu shows a list of *available configurations*
+   (initially just one). Every time you change the NixOS configuration (see
+   `Changing Configuration <None>`_
+   ), a new item is added to the menu. This allows you to easily roll back to
+   a previous configuration if something goes wrong.
 
-  You should log in and change the ``root`` password with
-  :command:`passwd`.
+   You should log in and change the ``root`` password with
+   :command:`passwd`.
 
-  You’ll probably want to create some user accounts as well, which can be
-  done with :command:`useradd`:
-  ::
+   You’ll probably want to create some user accounts as well, which can be
+   done with :command:`useradd`:
+   ::
 
-      $ useradd -c 'Eelco Dolstra' -m eelco$ passwd eelco
+       $ useradd -c 'Eelco Dolstra' -m eelco$ passwd eelco
 
-  You may also want to install some software. For instance,
-  ::
+   You may also want to install some software. For instance,
+   ::
 
-      $ nix-env -qaP \\*
+       $ nix-env -qaP \\*
 
-  shows what packages are available, and
-  ::
+   shows what packages are available, and
+   ::
 
-      $ nix-env -f '<nixpkgs>' -iA w3m
+       $ nix-env -f '<nixpkgs>' -iA w3m
 
-  installs the ``w3m`` browser.
+   installs the ``w3m`` browser.
 
 .. _sec-installation-summary:
 
