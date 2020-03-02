@@ -66,5 +66,17 @@ rec {
     cp -r ./_build $out
   '';
 
+  manpagesReST = pkgs.runCommand "nixos-manages-rest"
+  {
+    nativeBuildInputs = [(pkgs.python.withPackages(p: [p.sphinx]))];
+  }
+  ''
+    cp ${./conf.py} ./conf.py
+    cp ${./index.rst} ./index.rst
+    cp ${./man-nixos-rebuild.rst} ./man-nixos-rebuild.rst
+
+    sphinx-build -M man . "_build"
+    cp -r ./_build $out
+  '';
 
 }

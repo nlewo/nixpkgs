@@ -130,6 +130,7 @@ in rec {
   manualReSTGenerated = buildFromConfig ({ ... }: { }) (config: config.system.build.manual.manualReSTGenerated);
   manualReSTHTML = buildFromConfig ({ ... }: { }) (config: config.system.build.manual.manualReSTHTML);
   manualReSTFiles = buildFromConfig ({ ... }: { }) (config: config.system.build.manual.manualReSTFiles);
+  manpagesReST = buildFromConfig ({ ... }: { }) (config: config.system.build.manual.manpagesReST);
 
   manualHTML = buildFromConfig ({ ... }: { }) (config: config.system.build.manual.manualHTML);
   manual = manualHTML; # TODO(@oxij): remove eventually

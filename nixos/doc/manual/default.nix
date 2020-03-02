@@ -165,7 +165,7 @@ in rec {
   inherit (optionsDoc) optionsJSON optionsXML optionsDocBook;
 
   # This is only for debugging purposes
-  inherit (rest) manualReSTGenerated manualReSTHTML manualReSTFiles;
+  inherit (rest) manualReSTGenerated manualReSTHTML manualReSTFiles manpagesReST;
 
   # Generate the NixOS manual.
   manualHTML = runCommand "nixos-manual-html"
