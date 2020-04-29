@@ -90,6 +90,8 @@ common =
           mv tmp/config.nix.in corepkgs/config.nix.in
           '';
 
+          patches = [ ./patch.diff ];
+
       configureFlags =
         [ "--with-store-dir=${storeDir}"
           "--localstatedir=${stateDir}"

@@ -1,0 +1,13 @@
+diff --git a/src/libstore/build.cc b/src/libstore/build.cc
+index 57263476..b44f3e49 100644
+--- a/src/libstore/build.cc
++++ b/src/libstore/build.cc
+@@ -2251,7 +2251,7 @@ void DerivationGoal::startBuilder()
+         if (chown(slaveName.c_str(), buildUser->getUID(), 0))
+             throw SysError("changing owner of pseudoterminal slave");
+     } else {
+-        if (grantpt(builderOut.readSide.get()))
++        if (0)
+             throw SysError("granting access to pseudoterminal slave");
+     }
+ 
