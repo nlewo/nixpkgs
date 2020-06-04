@@ -1,4 +1,4 @@
-{ go, cacert, git, lib, removeReferencesTo, stdenv }:
+{ go, cacert, git, lib, removeReferencesTo, stdenv, runCommand, fetchgit, rsync }:
 
 { name ? "${args'.pname}-${args'.version}"
 , src
@@ -22,6 +22,8 @@
 , deleteVendor ? false
 
 , modSha256 ? null
+
+, goDeps ? null
 
 # We want parallel builds by default
 , enableParallelBuilding ? true
@@ -47,6 +49,48 @@ let
   removeExpr = refs: ''remove-references-to ${lib.concatMapStrings (ref: " -t ${ref}") refs}'';
 
   deleteFlag = if deleteVendor then "true" else "false";
+
+  dep2src = goDep:
+    {
+      inherit (goDep) goPackagePath;
+      src = if goDep.fetch.type == "git" then
+        fetchgit {
+          inherit (goDep.fetch) url rev sha256;
+        }
+      else if goDep.fetch.type == "hg" then
+        fetchhg {
+          inherit (goDep.fetch) url rev sha256;
+        }
+      else if goDep.fetch.type == "bzr" then
+        fetchbzr {
+          inherit (goDep.fetch) url rev sha256;
+        }
+      else if goDep.fetch.type == "FromGitHub" then
+        fetchFromGitHub {
+          inherit (goDep.fetch) owner repo rev sha256;
+        }
+      else abort "Unrecognized package fetch type: ${goDep.fetch.type}";
+    };
+
+  importGodeps = { depsFile }:
+    map dep2src (import depsFile);
+
+    go-modules-from-godeps = let
+      vendorize = {src, goPackagePath}: ''
+        mkdir -p $(dirname $out/${goPackagePath})
+        # rsync -a ${src}/ $out/${goPackagePath}
+        # chmod u+w -R $out/${goPackagePath}
+        # Create the directory tree
+        find ${src} -name "*.go" -printf "%P\n" | xargs dirname | sort | uniq | xargs -I {} mkdir -p $out/${goPackagePath}/{}
+        # Link all go files to these directories
+        find ${src} -name "*.go" -printf "%P\n" | xargs -I {} ln -sf ${src}/{} $out/${goPackagePath}/{}
+      '';
+    in runCommand "${name}-go-modules-from-godeps" { buildInputs = [ rsync ];} (''
+    mkdir $out
+  '' + (lib.concatMapStringsSep "\n" vendorize (importGodeps { depsFile = goDeps; })   
+  )
+
+    );
 
   go-modules = if vendorSha256 != null then go.stdenv.mkDerivation (let modArgs = {
 
@@ -127,10 +171,8 @@ let
       export GOSUMDB=off
       export GOPROXY=off
       cd "$modRoot"
-      if [ -n "${go-modules}" ]; then 
-          rm -rf vendor
-          ln -s ${go-modules} vendor
-      fi
+      rm -rf vendor
+      ln -s ${go-modules-from-godeps} vendor
 
       runHook postConfigure
     '';

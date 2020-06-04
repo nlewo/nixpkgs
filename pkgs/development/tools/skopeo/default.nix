@@ -27,6 +27,7 @@ buildGoModule rec {
   outputs = [ "out" "man" ];
 
   vendorSha256 = null;
+  goDeps = ./deps.nix;
 
   nativeBuildInputs = [ pkg-config go-md2man installShellFiles makeWrapper ];
 

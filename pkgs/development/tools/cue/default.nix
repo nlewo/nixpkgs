@@ -10,6 +10,7 @@ buildGoModule rec {
     sha256 = "06kag5dwkq4zsh1b52b74g3slsxlwwiap2w3709qjhrgda8w2zn3";
   };
 
+  goDeps = ./deps.nix;
   vendorSha256 = "1lhjd98n9j1cq36b5lhscb7k32qmyqg7zs6zc8yab494bm8sz89g";
 
   subPackages = [ "cmd/cue" ];
