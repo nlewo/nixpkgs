@@ -266,6 +266,7 @@ class StartCommand:
             f"{self._cmd}"
             f" -monitor unix:{monitor_socket_path}"
             f" -chardev socket,id=shell,path={shell_socket_path}"
+            f"{qemu_opts}"
             f"{display_opts}"
         )
 
