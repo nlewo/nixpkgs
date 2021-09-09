@@ -1309,8 +1309,6 @@ if __name__ == "__main__":
         ptpython.repl.embed(driver.test_symbols(), {})
     else:
         tic = time.time()
-        driver.start_all()
         driver.run_tests()
-        driver.join_all()
         toc = time.time()
         rootlog.info(f"test script finished in {(toc-tic):.2f}s")
