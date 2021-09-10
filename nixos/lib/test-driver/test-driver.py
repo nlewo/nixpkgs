@@ -461,6 +461,7 @@ class Machine:
             hda=hda,
             cdrom=args.get("cdrom"),
             usb=args.get("usb"),
+            qemuFlags=args.get("qemuFlags"),
         )
 
     def is_up(self) -> bool:
