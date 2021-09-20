@@ -274,8 +274,9 @@ class StartCommand:
     def build_environment(
         state_dir: pathlib.Path,
         shared_dir: pathlib.Path,
-    ) -> os._Environ:
-        env = os.environ
+    ) -> dict:
+        # We make a copy to not update the current environment
+        env = dict(os.environ)
         env.update(
             {
                 "TMPDIR": str(state_dir),
