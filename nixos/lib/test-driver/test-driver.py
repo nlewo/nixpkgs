@@ -257,6 +257,7 @@ class StartCommand:
             else " -no-reboot"
             " -device virtio-serial"
             " -device virtconsole,chardev=shell"
+            " -device virtio-rng-pci"
             " -serial stdio"
         )
         # TODO: qemu script already catpures this env variable, legacy?
