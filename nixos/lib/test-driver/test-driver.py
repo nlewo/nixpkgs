@@ -463,6 +463,7 @@ class Machine:
             hda=hda,
             cdrom=args.get("cdrom"),
             usb=args.get("usb"),
+            bios=args.get("bios"),
             qemuFlags=args.get("qemuFlags"),
         )
 
