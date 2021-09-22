@@ -377,7 +377,7 @@ class LegacyStartCommand(StartCommand):
             usb_cmd += (
                 " -device usb-ehci"
                 f" -drive id=usbdisk,file={usb},if=none,readonly"
-                "-device usb-storage,drive=usbdisk "
+                " -device usb-storage,drive=usbdisk "
             )
         self._cmd += usb_cmd
 
