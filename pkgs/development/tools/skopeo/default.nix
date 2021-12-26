@@ -10,6 +10,7 @@
 , installShellFiles
 , makeWrapper
 , fuse-overlayfs
+, fetchurl
 }:
 
 buildGoModule rec {
@@ -34,11 +35,36 @@ buildGoModule rec {
   buildInputs = [ gpgme ]
   ++ lib.optionals stdenv.isLinux [ lvm2 btrfs-progs ];
 
-  buildPhase = ''
+  buildPhase = let
+    patch = fetchurl {
+        url = "https://github.com/nlewo/image/commit/08c939335ec8c9a819de6ddddaabe6831f61935c.patch";
+        sha256 = "sha256-g+cMdZx2/ZlCA3qOd8p9PZJMeprPSRohakYrHLfLpv8=";
+    };
+    containers-image-nix = fetchFromGitHub {
+      owner = "nlewo";
+      repo = "containers-image-nix";
+      rev = "48ba04122df97bc2ea75862772151c1bd70c0e58";
+      sha256 = "sha256-tGJ4A8mETQwyYPiAtim6fee1C2NsgW7BTGqrLsiF4MA=";
+    };
+  in ''
+    mkdir -p vendor/github.com/nlewo/containers-image-nix/
+    cp -r ${containers-image-nix}/* vendor/github.com/nlewo/containers-image-nix/
+    cat go.mod | grep github.com | grep container
+    cd vendor/github.com/containers/image/v5
+    echo
+    echo
+    mkdir nix/
+    touch nix/transport.go
+    ls -l
+    patch -p1 < ${patch}
+    echo
+    echo
+    cd -
     runHook preBuild
     patchShebangs .
     make bin/skopeo docs
     runHook postBuild
+
   '';
 
   installPhase = ''

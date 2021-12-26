@@ -403,6 +403,9 @@ with pkgs;
   };
   tarsum = callPackage ../build-support/docker/tarsum.nix { };
 
+  containerTools = callPackage ../build-support/container-tools { };
+  containers-image-nix = callPackage ../build-support/container-tools/containers-image-nix.nix { };
+
   snapTools = callPackage ../build-support/snap { };
 
   nix-prefetch-docker = callPackage ../build-support/docker/nix-prefetch-docker.nix { };
