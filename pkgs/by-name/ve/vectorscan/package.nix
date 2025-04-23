@@ -70,6 +70,7 @@ stdenv.mkDerivation rec {
           "-DBUILD_AVX512=ON"
           "-DBUILD_AVX512VBMI=ON"
           "-DFAT_RUNTIME=ON"
+          "-DSIMDE_BACKEND=ON"
         ]
       else
         (
